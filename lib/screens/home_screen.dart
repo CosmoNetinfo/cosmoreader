@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:file_picker/file_picker.dart' as picker;
 import '../theme/app_theme.dart';
 import '../services/recent_files_service.dart';
 import '../widgets/cosmonet_logo.dart';
@@ -32,8 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _pickPdf() async {
     setState(() => _loading = true);
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
+      final result = await picker.FilePicker.platform.pickFiles(
+        type: picker.FileType.custom,
         allowedExtensions: ['pdf'],
         allowMultiple: false,
       );

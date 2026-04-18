@@ -1,7 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pdfx/pdfx.dart';
 import '../theme/app_theme.dart';
 
@@ -16,8 +15,8 @@ class PdfViewerScreen extends StatefulWidget {
 }
 
 class _PdfViewerScreenState extends State<PdfViewerScreen> {
-  PdfControllerPinch? _controllerPinch;
-  PdfController? _controllerNormal;
+  // Use dynamic to avoid ambiguous class resolution during build across drives
+  dynamic _controller;
   
   int _currentPage = 1;
   int _totalPages = 0;
@@ -29,21 +28,23 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   void initState() {
     super.initState();
     try {
-      final doc = PdfDocument.openFile(widget.path);
+      final document = PdfDocument.openFile(widget.path);
       if (_isDesktop) {
-        _controllerNormal = PdfController(document: doc);
+        _controller = PdfController(document: document);
       } else {
-        _controllerPinch = PdfControllerPinch(document: doc);
+        _controller = PdfControllerPinch(
+          document: document,
+          initialPage: 1,
+        );
       }
     } catch (e) {
-      debugPrint("Error initializing PDF: $e");
+      debugPrint("Error initializing PDF document: $e");
     }
   }
 
   @override
   void dispose() {
-    _controllerNormal?.dispose();
-    _controllerPinch?.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -53,21 +54,19 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 
   void _prevPage() {
     if (_currentPage > 1) {
-      if (_isDesktop) {
-        _controllerNormal?.previousPage(curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
-      } else {
-        _controllerPinch?.previousPage(curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
-      }
+      _controller?.previousPage(
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 250),
+      );
     }
   }
 
   void _nextPage() {
     if (_currentPage < _totalPages) {
-      if (_isDesktop) {
-        _controllerNormal?.nextPage(curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
-      } else {
-        _controllerPinch?.nextPage(curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
-      }
+      _controller?.nextPage(
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 250),
+      );
     }
   }
 
@@ -105,19 +104,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             onPressed: () {
               final n = int.tryParse(tc.text);
               if (n != null && n >= 1 && n <= _totalPages) {
-                if (_isDesktop) {
-                  _controllerNormal?.animateToPage(
-                    pageNumber: n,
-                    curve: Curves.easeInOut,
-                    duration: const Duration(milliseconds: 400),
-                  );
-                } else {
-                  _controllerPinch?.animateToPage(
-                    pageNumber: n,
-                    curve: Curves.easeInOut,
-                    duration: const Duration(milliseconds: 400),
-                  );
-                }
+                _controller?.animateToPage(
+                  pageNumber: n,
+                  curve: Curves.easeInOut,
+                  duration: const Duration(milliseconds: 400),
+                );
               }
               Navigator.pop(ctx);
             },
@@ -158,6 +149,13 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_controller == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.bgDeep,
+        body: _buildError(context, "Errore caricamento controller"),
+      );
+    }
+
     final shortName = widget.name.length > 28
         ? '${widget.name.substring(0, 25)}...'
         : widget.name;
@@ -187,9 +185,9 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           child: Stack(
             children: [
               // ── PDF View ────────────────────────────────────────
-              if (_isDesktop && _controllerNormal != null)
+              if (_isDesktop)
                 PdfView(
-                  controller: _controllerNormal!,
+                  controller: _controller as PdfController,
                   onDocumentLoaded: (doc) {
                     setState(() => _totalPages = doc.pagesCount);
                   },
@@ -203,9 +201,9 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                     errorBuilder: _buildError,
                   ),
                 )
-              else if (!_isDesktop && _controllerPinch != null)
+              else
                 PdfViewPinch(
-                  controller: _controllerPinch!,
+                  controller: _controller as PdfControllerPinch,
                   onDocumentLoaded: (doc) {
                     setState(() => _totalPages = doc.pagesCount);
                   },
@@ -218,9 +216,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                     pageLoaderBuilder: pageLoadBuilder,
                     errorBuilder: _buildError,
                   ),
-                )
-              else 
-                _buildError(context, "Controller non inizializzato"),
+                  // Fix zoom stuck issue on mobile: allow returning to 1.0 scale
+                  minScale: 1.0, 
+                  initialScale: 1.0,
+                ),
 
               // ── Top Toolbar ─────────────────────────────────────
               AnimatedPositioned(
@@ -327,19 +326,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                                 final targetPage =
                                     (progress * _totalPages).clamp(1, _totalPages).round();
                                 
-                                if (_isDesktop) {
-                                  _controllerNormal?.animateToPage(
-                                    pageNumber: targetPage,
-                                    curve: Curves.easeOut,
-                                    duration: const Duration(milliseconds: 300),
-                                  );
-                                } else {
-                                  _controllerPinch?.animateToPage(
-                                    pageNumber: targetPage,
-                                    curve: Curves.easeOut,
-                                    duration: const Duration(milliseconds: 300),
-                                  );
-                                }
+                                _controller?.animateToPage(
+                                  pageNumber: targetPage,
+                                  curve: Curves.easeOut,
+                                  duration: const Duration(milliseconds: 300),
+                                );
                               },
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
