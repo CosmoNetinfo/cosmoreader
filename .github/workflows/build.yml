@@ -1,0 +1,165 @@
+name: Build CosmoNet Reader
+
+on:
+  push:
+    tags:
+      - 'v*'          # Si attiva solo quando pubblichi un tag tipo v1.0.0
+
+jobs:
+  # ─────────────────────────────────────────
+  # JOB 1 — APK Android
+  # ─────────────────────────────────────────
+  build-android:
+    name: Build APK Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codice
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Installa dipendenze
+        run: flutter pub get
+
+      - name: Rigenera Icone App
+        run: dart run flutter_launcher_icons
+
+      - name: Build APK release (split per ABI)
+        run: flutter build apk --release --split-per-abi
+
+      - name: Rinomina APK con versione tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+             build/app/outputs/flutter-apk/CosmoNetReader-${VERSION}-arm64.apk
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+             build/app/outputs/flutter-apk/CosmoNetReader-${VERSION}-arm32.apk
+
+      - name: Upload APK arm64 (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-arm64
+          path: build/app/outputs/flutter-apk/CosmoNetReader-*-arm64.apk
+
+      - name: Upload APK arm32 (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-arm32
+          path: build/app/outputs/flutter-apk/CosmoNetReader-*-arm32.apk
+
+  # ─────────────────────────────────────────
+  # JOB 2 — EXE Windows
+  # ─────────────────────────────────────────
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout codice
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Installa dipendenze
+        run: flutter pub get
+
+      - name: Rigenera Icone App
+        run: dart run flutter_launcher_icons
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Installa Inno Setup
+        run: choco install innosetup -y
+
+      - name: Crea installer.iss
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          @"
+          [Setup]
+          AppName=CosmoNet Reader
+          AppVersion=$version
+          AppPublisher=cosmonet.info
+          AppPublisherURL=https://www.cosmonet.info
+          DefaultDirName={autopf}\CosmoNet Reader
+          DefaultGroupName=CosmoNet Reader
+          OutputBaseFilename=CosmoNetReader-$version-Setup
+          OutputDir=output
+          Compression=lzma
+          SolidCompression=yes
+
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs
+
+          [Icons]
+          Name: "{group}\CosmoNet Reader"; Filename: "{app}\cosmonet_reader.exe"
+          Name: "{commondesktop}\CosmoNet Reader"; Filename: "{app}\cosmonet_reader.exe"
+
+          [Run]
+          Filename: "{app}\cosmonet_reader.exe"; Description: "Avvia CosmoNet Reader"; Flags: postinstall
+          "@ | Out-File -FilePath installer.iss -Encoding UTF8
+
+      - name: Compila installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss'
+
+      - name: Upload Setup EXE (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-setup
+          path: output\CosmoNetReader-*-Setup.exe
+
+  # ─────────────────────────────────────────
+  # JOB 3 — Pubblica Release su GitHub
+  # ─────────────────────────────────────────
+  release:
+    name: Pubblica Release
+    needs: [build-android, build-windows]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Scarica tutti gli artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Pubblica Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "CosmoNet Reader ${{ github.ref_name }}"
+          body: |
+            ## CosmoNet Reader ${{ github.ref_name }}
+
+            ### Download
+            | File | Piattaforma |
+            |------|-------------|
+            | `CosmoNetReader-*-arm64.apk` | Android (telefoni moderni) |
+            | `CosmoNetReader-*-arm32.apk` | Android (telefoni vecchi) |
+            | `CosmoNetReader-*-Setup.exe` | Windows 10/11 |
+
+            ---
+            🌐 [cosmonet.info](https://www.cosmonet.info)
+          files: artifacts/*
+          draft: false
+          prerelease: false
