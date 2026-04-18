@@ -218,7 +218,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                   // Fix zoom stuck issue on mobile: allow returning to 1.0 scale
                   minScale: 1.0, 
-                  initialScale: 1.0,
                 ),
 
               // ── Top Toolbar ─────────────────────────────────────
