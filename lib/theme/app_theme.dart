@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Cosmonet brand palette
-  static const Color bgDeep     = Color(0xFF080C14);
-  static const Color bgSurface  = Color(0xFF0F1623);
-  static const Color bgCard     = Color(0xFF161E2E);
-  static const Color bgElevated = Color(0xFF1C2638);
-  static const Color accent     = Color(0xFF4FC3F7); // CosmoNet cyan
-  static const Color accentDim  = Color(0xFF1A4A6B);
-  static const Color textPrimary   = Color(0xFFE8F0FE);
-  static const Color textSecondary = Color(0xFF7B8FB0);
-  static const Color textMuted     = Color(0xFF3D5070);
-  static const Color divider       = Color(0xFF1C2638);
+  static const Color bgDeep      = Color(0xFF080C14);
+  static const Color bgSurface   = Color(0xFF0F1623);
+  static const Color bgCard      = Color(0xFF161E2E);
+  static const Color bgElevated  = Color(0xFF1C2638);
+  static const Color accent      = Color(0xFF4FC3F7);
+  static const Color accentDim   = Color(0xFF1A4A6B);
+  static const Color textPrimary    = Color(0xFFE8F0FE);
+  static const Color textSecondary  = Color(0xFF7B8FB0);
+  static const Color textMuted      = Color(0xFF3D5070);
+  static const Color divider        = Color(0xFF1C2638);
 
   static ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
@@ -37,7 +36,7 @@ class AppTheme {
         letterSpacing: 0.3,
       ),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: bgCard,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -60,7 +59,7 @@ class AppTheme {
       titleMedium: TextStyle(
         color: textPrimary, fontSize: 15, fontWeight: FontWeight.w500,
       ),
-      bodyLarge: TextStyle(color: textPrimary, fontSize: 15),
+      bodyLarge:  TextStyle(color: textPrimary, fontSize: 15),
       bodyMedium: TextStyle(color: textSecondary, fontSize: 13),
       labelSmall: TextStyle(color: textMuted, fontSize: 11, letterSpacing: 0.8),
     ),
