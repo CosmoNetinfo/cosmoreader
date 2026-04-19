@@ -3,7 +3,7 @@ name: Build CosmoNet Reader
 on:
   push:
     tags:
-      - 'v*'          # Si attiva solo quando pubblichi un tag tipo v1.0.0
+      - 'v*'
 
 jobs:
   # ─────────────────────────────────────────
@@ -30,16 +30,25 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - name: Installa dipendenze
         run: flutter pub get
 
-      - name: Rigenera Icone App
-        run: dart run flutter_launcher_icons
-
-      - name: Build APK release (split per ABI)
+      - name: Build APK release
         run: flutter build apk --release --split-per-abi
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
 
-      - name: Rinomina APK con versione tag
+      - name: Rinomina APK
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
@@ -47,13 +56,13 @@ jobs:
           mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
              build/app/outputs/flutter-apk/CosmoNetReader-${VERSION}-arm32.apk
 
-      - name: Upload APK arm64 (artifact)
+      - name: Upload APK arm64
         uses: actions/upload-artifact@v4
         with:
           name: apk-arm64
           path: build/app/outputs/flutter-apk/CosmoNetReader-*-arm64.apk
 
-      - name: Upload APK arm32 (artifact)
+      - name: Upload APK arm32
         uses: actions/upload-artifact@v4
         with:
           name: apk-arm32
@@ -77,11 +86,21 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Abilita supporto Windows desktop
+        run: flutter config --enable-windows-desktop
+
       - name: Installa dipendenze
         run: flutter pub get
 
-      - name: Rigenera Icone App
-        run: dart run flutter_launcher_icons
+      - name: Rigenerazione cartella windows (se mancante o corrotta)
+        run: |
+          if (!(Test-Path "windows\runner\Runner.rc")) {
+            Write-Host "Cartella windows mancante o incompleta, rigenero..."
+            flutter create --platforms=windows .
+          } else {
+            Write-Host "Cartella windows OK"
+          }
+        shell: pwsh
 
       - name: Build Windows
         run: flutter build windows --release
@@ -120,14 +139,14 @@ jobs:
       - name: Compila installer
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss'
 
-      - name: Upload Setup EXE (artifact)
+      - name: Upload Setup EXE
         uses: actions/upload-artifact@v4
         with:
           name: windows-setup
           path: output\CosmoNetReader-*-Setup.exe
 
   # ─────────────────────────────────────────
-  # JOB 3 — Pubblica Release su GitHub
+  # JOB 3 — Pubblica Release
   # ─────────────────────────────────────────
   release:
     name: Pubblica Release
