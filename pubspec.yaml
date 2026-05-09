@@ -1,7 +1,7 @@
 name: cosmonet_reader
 description: CosmoNet Reader — Lettore PDF professionale, senza pubblicità, by cosmonet.info
 publish_to: 'none'
-version: 2.0.0+1
+version: 2.0.1+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
