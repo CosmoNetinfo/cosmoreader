@@ -1,7 +1,7 @@
 name: cosmonet_reader
-description: CosmoNet Reader — Lettore PDF pulito, senza pubblicità, by cosmonet.info
+description: CosmoNet Reader — Lettore PDF professionale, senza pubblicità, by cosmonet.info
 publish_to: 'none'
-version: 1.0.0+1
+version: 2.0.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -9,11 +9,36 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Rendering PDF
   pdfx: ^2.6.0
+
+  # File system
   file_picker: ^8.1.0
-  shared_preferences: ^2.3.2
   path: ^1.9.0
+  path_provider: ^2.1.4
+
+  # Storage locale (tutto offline, niente Firebase o cloud)
+  shared_preferences: ^2.3.2
+  sqflite: ^2.3.3+1
+  sqflite_common_ffi: ^2.3.4        # SQLite su Windows
+
+  # UI / UX
+  flutter_animate: ^4.5.0
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+
+  # Funzionalità
+  share_plus: ^10.0.2
+  printing: ^5.13.2
   url_launcher: ^6.3.0
+  package_info_plus: ^8.1.1
+  crypto: ^3.0.3
+
+  # Permessi Android
+  permission_handler: ^11.3.1
+  intl: ^0.20.2
+  pdfrx: ^2.3.2
 
 dev_dependencies:
   flutter_test:

@@ -1,79 +1,46 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
-class RecentFile {
-  final String path;
-  final String name;
-  final DateTime openedAt;
-
-  const RecentFile({
-    required this.path,
-    required this.name,
-    required this.openedAt,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'path': path,
-    'name': name,
-    'openedAt': openedAt.toIso8601String(),
-  };
-
-  factory RecentFile.fromJson(Map<String, dynamic> json) => RecentFile(
-    path: json['path'] as String,
-    name: json['name'] as String,
-    openedAt: DateTime.parse(json['openedAt'] as String),
-  );
-}
+import '../models/recent_file.dart';
 
 class RecentFilesService {
-  static const _key = 'cosmonet_recent_files';
-  static const _maxRecent = 20;
+  static const String _key = 'recent_files';
+  static const int _maxFiles = 30;
 
-  static Future<List<RecentFile>> getRecent() async {
+  Future<List<RecentFile>> getRecentFiles() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_key) ?? [];
-    return raw
-        .map((e) => RecentFile.fromJson(jsonDecode(e) as Map<String, dynamic>))
-        .toList()
-      ..sort((a, b) => b.openedAt.compareTo(a.openedAt));
+    final String? jsonString = prefs.getString(_key);
+    if (jsonString == null) return [];
+
+    final List<dynamic> jsonList = jsonDecode(jsonString);
+    return jsonList.map((e) => RecentFile.fromJson(e)).toList();
   }
 
-  static Future<void> addFile(String path, String name) async {
+  Future<void> addFile(RecentFile file) async {
     final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList(_key) ?? [];
+    List<RecentFile> files = await getRecentFiles();
 
-    // Rimuovi duplicati stesso path
-    final filtered = existing.where((e) {
-      final m = jsonDecode(e) as Map<String, dynamic>;
-      return m['path'] != path;
-    }).toList();
+    // Remove if already exists to move to top
+    files.removeWhere((e) => e.path == file.path);
+    
+    // Add to top
+    files.insert(0, file);
 
-    final newEntry = jsonEncode(RecentFile(
-      path: path,
-      name: name,
-      openedAt: DateTime.now(),
-    ).toJson());
-
-    filtered.insert(0, newEntry);
-
-    if (filtered.length > _maxRecent) {
-      filtered.removeRange(_maxRecent, filtered.length);
+    // Trim list
+    if (files.length > _maxFiles) {
+      files = files.sublist(0, _maxFiles);
     }
 
-    await prefs.setStringList(_key, filtered);
+    await prefs.setString(_key, jsonEncode(files.map((e) => e.toJson()).toList()));
   }
 
-  static Future<void> removeFile(String path) async {
+  Future<void> removeFile(String path) async {
     final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList(_key) ?? [];
-    final filtered = existing.where((e) {
-      final m = jsonDecode(e) as Map<String, dynamic>;
-      return m['path'] != path;
-    }).toList();
-    await prefs.setStringList(_key, filtered);
+    List<RecentFile> files = await getRecentFiles();
+    files.removeWhere((e) => e.path == path);
+    await prefs.setString(_key, jsonEncode(files.map((e) => e.toJson()).toList()));
   }
 
-  static Future<void> clearAll() async {
+  Future<void> clearHistory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_key);
   }
