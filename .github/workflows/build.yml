@@ -68,6 +68,12 @@ jobs:
       - name: Install dipendenze
         run: flutter pub get
 
+      - name: Abilita supporto Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Rigenera file di progetto Windows
+        run: flutter create --platforms=windows .
+
       - name: Build Windows release
         run: flutter build windows --release
 
