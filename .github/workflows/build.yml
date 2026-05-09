@@ -76,6 +76,9 @@ jobs:
           Remove-Item -Recurse -Force windows
           flutter create --platforms=windows --project-name cosmonet_reader .
 
+      - name: Genera icona personalizzata
+        run: dart run flutter_launcher_icons
+
       - name: Build Windows release
         run: flutter build windows --release
 
