@@ -11,7 +11,6 @@ OutputBaseFilename=CosmoNetReader_2.0.0_Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=assets\icon.ico
 UninstallDisplayIcon={app}\cosmonet_reader.exe
 
 [Languages]
