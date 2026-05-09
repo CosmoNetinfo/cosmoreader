@@ -71,8 +71,10 @@ jobs:
       - name: Abilita supporto Windows desktop
         run: flutter config --enable-windows-desktop
 
-      - name: Rigenera file di progetto Windows
-        run: flutter create --platforms=windows .
+      - name: Rigenera progetto Windows da zero
+        run: |
+          Remove-Item -Recurse -Force windows
+          flutter create --platforms=windows --project-name cosmonet_reader .
 
       - name: Build Windows release
         run: flutter build windows --release
