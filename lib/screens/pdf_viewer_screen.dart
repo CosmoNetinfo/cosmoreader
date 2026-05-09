@@ -257,7 +257,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               params: PdfViewerParams(
                 backgroundColor: Colors.black,
                 maxScale: 5.0,
-                onDocumentChanged: (document) => _onDocumentLoaded(document!),
+                onDocumentChanged: (document) { if (document != null) _onDocumentLoaded(document); },
                 onPageChanged: (page) {
                   if (page != null) _updateProgress(page);
                 },
