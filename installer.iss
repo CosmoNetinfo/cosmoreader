@@ -2,12 +2,14 @@
 
 [Setup]
 AppName=CosmoNet Reader
-AppVersion=2.0.0
+AppVersion=2.0.1
 AppPublisher=CosmoNet.info
 AppPublisherURL=https://www.cosmonet.info
 DefaultDirName={autopf}\CosmoNet Reader
 DefaultGroupName=CosmoNet Reader
-OutputBaseFilename=CosmoNetReader_2.0.0_Setup
+OutputBaseFilename=CosmoNetReader_2.0.1_Setup
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
