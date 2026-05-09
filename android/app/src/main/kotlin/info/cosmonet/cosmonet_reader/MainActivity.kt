@@ -1,4 +1,4 @@
-package com.example.cosmonet_reader
+package info.cosmonet.cosmonet_reader
 
 import io.flutter.embedding.android.FlutterActivity
 
